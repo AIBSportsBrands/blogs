@@ -1,0 +1,1092 @@
+
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/assets/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/assets/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/assets/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="fileupload,Java,Http," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="MORE技术分享" type="application/atom+xml" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="">
+<meta name="keywords" content="fileupload, Java, Http">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Custom Fileupload">
+<meta property="og:url" content="http://localhost:4000/blog-gh-pages/web/2014/04/15/fileupload/">
+<meta property="og:site_name" content="MORE技术分享">
+<meta property="og:description" content="">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="/http-get.png">
+<meta property="og:image" content="/http-post.png">
+<meta property="og:image" content="/boundary-A.png">
+<meta property="og:image" content="/boundary-B.png">
+<meta property="og:image" content="/boundary-C.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Custom Fileupload">
+<meta name="twitter:description" content="">
+<meta name="twitter:image" content="/http-get.png">
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://localhost:4000/"/>
+
+
+
+
+
+  <title>Custom Fileupload | MORE技术分享</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">MORE技术分享</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+<div id="posts" class="posts-expand">
+  
+  
+
+  
+
+  
+  
+  
+
+  <article class="post post-type- " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://localhost:4000/blog-gh-pages/web/2014/04/15/fileupload/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="MORE">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="assets/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MORE技术分享">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+          
+          
+            Custom Fileupload
+          
+        </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2014-04-15T00:00:00+08:00">
+                2014-04-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/category/#/blog-gh-pages" itemprop="url" rel="index">
+                    <span itemprop="name">blog-gh-pages</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/category/#/web" itemprop="url" rel="index">
+                    <span itemprop="name">web</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+            
+                <div class="post-description">
+                    
+                </div>
+            
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <ul id="markdown-toc">
+  <li><a href="#http" id="markdown-toc-http">HTTP</a></li>
+  <li><a href="#分析" id="markdown-toc-分析">分析</a></li>
+  <li><a href="#设计" id="markdown-toc-设计">设计</a></li>
+  <li><a href="#关键代码" id="markdown-toc-关键代码">关键代码</a></li>
+  <li><a href="#源码获取" id="markdown-toc-源码获取">源码获取</a></li>
+</ul>
+
+<p>本文的目的是简要说明如何编写一个文件上传组件，使他的功能类似 <a href="https://github.com/apache/commons-fileupload">commons-fileupload</a>, 并在结尾处提供了完整代码的获取方式。</p>
+
+<h1 id="http">HTTP</h1>
+<p>本文讨论的是基于 HTTP 协议的文件上传，下面先来看看 HTTP 请求的真面目。</p>
+
+<p>首先，用 JavaSe 类库中的 Socket 搭建一个超简单的服务器，这个服务器只有一个功能，就是完整地打印整个 HTTP 请求体。</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21<br/>22<br/>23<br/>24<br/>25<br/>26<br/>27<br/>28<br/>29<br/>30<br/>31</pre></td><td class="code"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Server</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="n">ServerSocket</span> <span class="n">serverSocket</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Server</span><span class="o">()</span> <span class="kd">throws</span>  <span class="n">IOException</span><span class="o">{</span>
+        <span class="n">serverSocket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ServerSocket</span><span class="o">(</span><span class="mi">8080</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">show</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+        <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+            <span class="n">Socket</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">serverSocket</span><span class="o">.</span><span class="na">accept</span><span class="o">();</span>
+            <span class="kt">byte</span><span class="o">[]</span> <span class="n">buf</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">1024</span><span class="o">];</span>
+            <span class="n">InputStream</span> <span class="n">is</span> <span class="o">=</span>  <span class="n">socket</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">();</span>
+            <span class="n">OutputStream</span> <span class="n">os</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">();</span>
+            <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="k">while</span> <span class="o">((</span><span class="n">n</span> <span class="o">=</span> <span class="n">is</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buf</span><span class="o">))</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="o">){</span>
+                <span class="n">os</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">buf</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="n">n</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="n">os</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+            <span class="n">is</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+            <span class="n">socket</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">os</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+        <span class="k">new</span> <span class="nf">Server</span><span class="o">().</span><span class="na">show</span><span class="o">();</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<p>将服务器运行起来之后，在浏览器中输入地址：<code class="highlighter-rouge">http://localhost:8080</code></p>
+
+<p>在我的机器上，显示如下内容，可以看到，这个一个get请求</p>
+
+<p><img src="/http-get.png" alt="http-get" /></p>
+
+<p>下面利用一个 html 的 form表单提交 post 请求</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5</pre></td><td class="code"><pre class="highlight"><code>    <span class="nt">&lt;form</span> <span class="na">action=</span><span class="s">"http://localhost:8080"</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">enctype=</span><span class="s">"multipart/form-data"</span><span class="nt">&gt;</span>
+       <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"text"</span> <span class="na">name=</span><span class="s">"time"</span> <span class="na">value=</span><span class="s">"1970-01-01"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"file"</span> <span class="na">name=</span><span class="s">"file"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"submit"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/form&gt;</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<p>在我的机器上，显示如下内容</p>
+
+<p><img src="/http-post.png" alt="http-post" /></p>
+
+<p>注意图中被红色框起来的部分，第一个红框指示了本次请求中，用来分隔不同元素的分隔线。</p>
+
+<p>每个元素将以此分隔线作为第一行，后面紧跟对元素的描述，描述与内容用空行分隔。</p>
+
+<p>分隔线的后面加两个小短横代表整个请求体结束，即<strong>EOF</strong>。</p>
+
+<p>我们需要做的工作，就是利用分隔线，从请求体中分离出每个元素，分析HTTP请求头的工作可以交给Servlet。</p>
+
+<h1 id="分析">分析</h1>
+
+<p>那么，如何分离呢？</p>
+
+<p>java中的 <code class="highlighter-rouge">InputStream</code> 只能读取一次，所以我们想要方便地分析一个流，最直接的办法就是将其缓存下来。</p>
+
+<p>RandomAccessFile 或许能够满足需求，RandomAccessFile 可以提供一个指针用于在文件中的随意移动，然而需要读写本地文件的方案不会是最优方案。</p>
+
+<p>先将整个流读一遍将内容缓存到内存中？ 这种方案在多个客户端同时提交大文件时一定是不可靠的。</p>
+
+<p>最理想的方案可能是，我只需要读一遍 <code class="highlighter-rouge">InputStream</code> , 读完后将得到一个有序列表，列表中存放每个元素对象。</p>
+
+<p>很明显，JavaSe的流没有提供这个功能</p>
+
+<p>我们知道从 <code class="highlighter-rouge">InputStreeam</code> 中获取内容需要使用 <code class="highlighter-rouge">read</code> 方法，返回 <code class="highlighter-rouge">-1</code> 表示读到了流的末尾，如果我们增强一下<code class="highlighter-rouge">read</code>的功能，让其在读到每个元素末尾的时候返回 <code class="highlighter-rouge">-1</code>，这样不就可以分离出每个元素了吗，至于判断是否到了整个流的末尾，自有办法。</p>
+
+<h1 id="设计">设计</h1>
+
+<p>如何增强<code class="highlighter-rouge">read</code>方法呢？</p>
+
+<p><code class="highlighter-rouge">read</code>方法要在读到元素末尾时返回<code class="highlighter-rouge">-1</code> , 一定需要先对已读取的内容进行分析，判断是否元素末尾。</p>
+
+<p>我的做法是，内部维护一个buffer，<code class="highlighter-rouge">read</code>方法在读取时先将字节写入到这个buffer中，然后分析其中是否存在分隔线，然后将buffer中可用的元素复制到客户端提供的buffer。</p>
+
+<p>这个内部维护的buffer并不总是满的，其中的字节来自read方法的原始功能，所以我们需要一个变量来记录buffer中有效字节的末尾位置 <code class="highlighter-rouge">tail</code>。</p>
+
+<p>我们还需要一个变量 <code class="highlighter-rouge">pos</code> 来标记buffer中是否存在分隔线，pos的值即为分隔线的开头在buffer中的位置，如果buffer中不存在分隔线pos的值将为-1。</p>
+
+<p>但是问题没这个简单，分隔线在buffer中存在状态有两种情况：</p>
+
+<p>情况A，分隔线完好地存在于buffer中，图中的bundary即为分隔线</p>
+
+<p><img src="/boundary-A.png" alt="boundary-A" /></p>
+
+<p>情况B，分隔线的一部分存在于buffer中</p>
+
+<p><img src="/boundary-B.png" alt="boundary-B" /></p>
+
+<p>在B情况下，<code class="highlighter-rouge">boundary</code>有多少字节存在于buffer中是不确定的，而且依靠这些不完整的字节根本无法判断他是否属于boundary开头。</p>
+
+<p>例如，buffer中没有发现boundary，但是buffer末尾的3个字节与boundary开头相同，这种情况可能只是巧合，boundary并没有被截断。</p>
+
+<p>对于这个问题，有一个解决办法，我们不必检查到buffer末尾，而是在buffer末尾留一个关健区<code class="highlighter-rouge">pad</code>。</p>
+
+<p>这个关健区中很有可能存在被截断boundary，每次检查到<code class="highlighter-rouge">pad</code>开头时立即收手，此位置之前的数据可以确保没有boundary，在下次填充buffer时，将这个关健区中的数据复制到buffer开头再处理。很显然，关健区<code class="highlighter-rouge">pad</code>长度应该等于boundary，如图：</p>
+
+<p><img src="/boundary-C.png" alt="pad" /></p>
+
+<h1 id="关键代码">关键代码</h1>
+
+<p><strong>在buffer中检查boundary</strong></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21</pre></td><td class="code"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">int</span> <span class="nf">findSeparator</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">first</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">match</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="c1">//若buffer中head至tail之间的字节数小于boundaryLength,那么maxpos将小于head,循环将不会运行,返回值为-1</span>
+    <span class="kt">int</span> <span class="n">maxpos</span> <span class="o">=</span> <span class="n">tail</span> <span class="o">-</span> <span class="n">boundaryLength</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">first</span> <span class="o">=</span> <span class="n">head</span><span class="o">;</span> <span class="n">first</span> <span class="o">&lt;=</span> <span class="n">maxpos</span> <span class="o">&amp;&amp;</span> <span class="n">match</span> <span class="o">!=</span> <span class="n">boundaryLength</span><span class="o">;</span> <span class="n">first</span><span class="o">++)</span> <span class="o">{</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="n">findByte</span><span class="o">(</span><span class="n">boundary</span><span class="o">[</span><span class="mi">0</span><span class="o">],</span> <span class="n">first</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">first</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="o">||</span> <span class="n">first</span> <span class="o">&gt;</span> <span class="n">maxpos</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">for</span> <span class="o">(</span><span class="n">match</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">match</span> <span class="o">&lt;</span> <span class="n">boundaryLength</span><span class="o">;</span> <span class="n">match</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">buffer</span><span class="o">[</span><span class="n">first</span> <span class="o">+</span> <span class="n">match</span><span class="o">]</span> <span class="o">!=</span> <span class="n">boundary</span><span class="o">[</span><span class="n">match</span><span class="o">])</span> <span class="o">{</span>
+                <span class="k">break</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">match</span> <span class="o">==</span> <span class="n">boundaryLength</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">first</span> <span class="o">-</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<p><strong>填充buffer</strong></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21<br/>22<br/>23<br/>24<br/>25<br/>26<br/>27<br/>28<br/>29<br/>30<br/>31<br/>32<br/>33<br/>34<br/>35<br/>36</pre></td><td class="code"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">int</span> <span class="nf">makeAvailable</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="c1">//该方法在available返回0时才会被调用,若pos!=-1那pos==head,表示boundary处于head位,可用字节数为0</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// 将pad位之后的数据移动到buffer开头</span>
+    <span class="n">total</span> <span class="o">+=</span> <span class="n">tail</span> <span class="o">-</span> <span class="n">head</span> <span class="o">-</span> <span class="n">pad</span><span class="o">;</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">arraycopy</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="n">tail</span> <span class="o">-</span> <span class="n">pad</span><span class="o">,</span> <span class="n">buffer</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">pad</span><span class="o">);</span>
+
+    <span class="c1">// 将buffer填满</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="n">tail</span> <span class="o">=</span> <span class="n">pad</span><span class="o">;</span>
+    <span class="c1">//循环读取数据,直至将buffer填满,在此过程中,每次读取都将检索buffer中是否存在boundary,无论存在与否,都将即时返回可用数据量</span>
+    <span class="k">for</span> <span class="o">(;;)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">bytesRead</span> <span class="o">=</span> <span class="n">input</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="n">tail</span><span class="o">,</span> <span class="n">bufSize</span> <span class="o">-</span> <span class="n">tail</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">bytesRead</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">//理论上因为会对buffer不断进行检索,读到boundary时就会return 0,read方法将返回 -1,</span>
+            <span class="c1">//所以不会读到input末尾,如果运行到了这里,表示发生了错误.</span>
+            <span class="kd">final</span> <span class="n">String</span> <span class="n">msg</span> <span class="o">=</span> <span class="s">"Stream ended unexpectedly"</span><span class="o">;</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="n">msg</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">notifier</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">notifier</span><span class="o">.</span><span class="na">noteBytesRead</span><span class="o">(</span><span class="n">bytesRead</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">tail</span> <span class="o">+=</span> <span class="n">bytesRead</span><span class="o">;</span>
+        <span class="n">findSeparator</span><span class="o">();</span>
+        <span class="c1">//若buffer中的数据量小于keepRegion(boundaryLength),av将必定等于0,循环将继续,直至数据量大于或等于keepRegion(boundaryLength).</span>
+        <span class="c1">//此时将检索buffer中是否包含boundary,若包含,将返回boundary所在位置pos之前的数据量,若不包含,将返回pad位之前的数据量</span>
+        <span class="kt">int</span> <span class="n">av</span> <span class="o">=</span> <span class="n">available</span><span class="o">();</span>
+
+        <span class="k">if</span> <span class="o">(</span><span class="n">av</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="n">av</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<p><strong>强化后的read方法</strong></p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21</pre></td><td class="code"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">int</span> <span class="nf">read</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">b</span><span class="o">,</span> <span class="kt">int</span> <span class="n">off</span><span class="o">,</span> <span class="kt">int</span> <span class="n">len</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">closed</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">"the stream is closed"</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">len</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="n">available</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">res</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">makeAvailable</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">res</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">min</span><span class="o">(</span><span class="n">res</span><span class="o">,</span> <span class="n">len</span><span class="o">);</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">arraycopy</span><span class="o">(</span><span class="n">buffer</span><span class="o">,</span> <span class="n">head</span><span class="o">,</span> <span class="n">b</span><span class="o">,</span> <span class="n">off</span><span class="o">,</span> <span class="n">res</span><span class="o">);</span>
+    <span class="n">head</span> <span class="o">+=</span> <span class="n">res</span><span class="o">;</span>
+    <span class="n">total</span> <span class="o">+=</span> <span class="n">res</span><span class="o">;</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<h1 id="源码获取">源码获取</h1>
+
+<p>我已经按照这套想法完整地实现了文件上传组件</p>
+
+<p>有兴趣的朋友可以从我的Gighub获取源码 <a href="https://github.com/dubuyuye/fileupload/releases">点我获取</a></p>
+
+<p>使用方法：<a href="https://github.com/dubuyuye/fileupload">点我查看</a></p>
+
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            
+            <a href="/tag/#/fileupload" rel="tag"># fileupload</a>
+          
+            
+            <a href="/tag/#/Java" rel="tag"># Java</a>
+          
+            
+            <a href="/tag/#/Http" rel="tag"># Http</a>
+          
+        </div>
+      
+
+      
+      
+      
+      
+      
+
+      
+      
+        <div class="post-nav" id="post-nav-id">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/blog-gh-pages/front-end/2014/04/20/flex/" rel="next" title="Flex">
+                <i class="fa fa-chevron-left"></i> Flex
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog-gh-pages/algorithm/2014/04/09/algorithm-gist/" rel="prev" title="算法小汇">
+                算法小汇 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+      
+
+      
+    </footer>
+  </article>
+
+  <div class="post-spread">
+    
+  </div>
+</div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        
+        
+        
+
+
+
+
+
+
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/assets/images/avatar.gif"
+               alt="MORE" />
+          <p class="site-author-name" itemprop="name">MORE</p>
+           
+              <p class="site-description motion-element" itemprop="description">MORE技术分享，记录每天的进步！</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/">
+                <span class="site-state-item-count">64</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+        
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+
+
+
+
+
+
+
+            
+              <div class="post-toc-content">
+    <ol class=nav>
+      <li class="nav-item nav-level-1"> <a class="nav-link" href="#http"> <span class="nav-number">1</span> <span class="nav-text">HTTP</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#分析"> <span class="nav-number">2</span> <span class="nav-text">分析</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#设计"> <span class="nav-number">3</span> <span class="nav-text">设计</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#关键代码"> <span class="nav-number">4</span> <span class="nav-text">关键代码</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#源码获取"> <span class="nav-number">5</span> <span class="nav-text">源码获取</span> </a> </li>
+    </ol>
+  </div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MORE</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+   
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/assets/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/assets/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/assets/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/assets/js/src/post-details.js?v=5.1.1"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/assets/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+    
+
+  
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
+

@@ -1,0 +1,958 @@
+
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/assets/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/assets/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/assets/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="java,算法,algorithm,排序,concurrent," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="MORE技术分享" type="application/atom+xml" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="">
+<meta name="keywords" content="java, 算法, algorithm, 排序, concurrent">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大文件内容对比多线程版本">
+<meta property="og:url" content="http://localhost:4000/blog-gh-pages/algorithm/2018/03/28/large-file-diff-concurrent/">
+<meta property="og:site_name" content="MORE技术分享">
+<meta property="og:description" content="">
+<meta property="og:locale" content="zh-Hans">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="大文件内容对比多线程版本">
+<meta name="twitter:description" content="">
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://localhost:4000/"/>
+
+
+
+
+
+  <title>大文件内容对比多线程版本 | MORE技术分享</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">MORE技术分享</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+<div id="posts" class="posts-expand">
+  
+  
+
+  
+
+  
+  
+  
+
+  <article class="post post-type- " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://localhost:4000/blog-gh-pages/algorithm/2018/03/28/large-file-diff-concurrent/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="MORE">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="assets/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MORE技术分享">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+          
+          
+            大文件内容对比多线程版本
+          
+        </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-28T00:00:00+08:00">
+                2018-03-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/category/#/blog-gh-pages" itemprop="url" rel="index">
+                    <span itemprop="name">blog-gh-pages</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/category/#/algorithm" itemprop="url" rel="index">
+                    <span itemprop="name">algorithm</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+            
+                <div class="post-description">
+                    
+                </div>
+            
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <ul id="markdown-toc">
+  <li><a href="#线程池" id="markdown-toc-线程池">线程池</a></li>
+  <li><a href="#线程池消费拆分任务" id="markdown-toc-线程池消费拆分任务">线程池消费拆分任务</a></li>
+  <li><a href="#线程池消费合并任务" id="markdown-toc-线程池消费合并任务">线程池消费合并任务</a></li>
+  <li><a href="#测试" id="markdown-toc-测试">测试</a></li>
+</ul>
+
+<p>这是<a href="https://bit-ranger.github.io/blog/algorithm/large-file-diff/">上一篇</a>的续作，对于这个算法，其中可以同时进行的部分有</p>
+<ol>
+  <li>拆分后对每一个块的排序可以同时进行</li>
+  <li>合并时的不同范围之间可以同时进行，例如拆分为10个小块，那么1-5小块的合并跟6-10小块的合并过程可以同时进行</li>
+  <li>合并的不同阶段之间不可以同时进行，因为不同阶段之间有先后顺序</li>
+  <li>不存在对同一条数据的修改，所以无需进行并发控制</li>
+</ol>
+
+<h1 id="线程池">线程池</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4</pre></td><td class="code"><pre class="highlight"><code><span class="k">this</span><span class="o">.</span><span class="na">threadPoolExecutor</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ThreadPoolExecutor</span><span class="o">(</span><span class="mi">8</span><span class="o">,</span> <span class="mi">8</span><span class="o">,</span> <span class="mi">10L</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">,</span>
+    <span class="k">new</span> <span class="n">LinkedBlockingQueue</span><span class="o">&lt;&gt;(</span><span class="mi">8</span><span class="o">),</span>
+    <span class="k">new</span> <span class="nf">CustomizableThreadFactory</span><span class="o">(</span><span class="s">"fileSorterTPE-"</span><span class="o">),</span>
+    <span class="k">new</span> <span class="n">ThreadPoolExecutor</span><span class="o">.</span><span class="na">CallerRunsPolicy</span><span class="o">());</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<h1 id="线程池消费拆分任务">线程池消费拆分任务</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21<br/>22<br/>23<br/>24</pre></td><td class="code"><pre class="highlight"><code><span class="n">List</span><span class="o">&lt;</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Chunk</span><span class="o">&gt;&gt;</span> <span class="n">splitFutureList</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+<span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">br</span><span class="o">.</span><span class="na">readLine</span><span class="o">();</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">line</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+        <span class="n">chunkRows</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">line</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">line</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">chunkRows</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="n">initialChunkSize</span><span class="o">){</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">chunkRows</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">){</span>
+            <span class="kd">final</span> <span class="kt">int</span> <span class="n">rn</span> <span class="o">=</span> <span class="n">rowNum</span><span class="o">;</span>
+            <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">cr</span> <span class="o">=</span> <span class="n">chunkRows</span><span class="o">;</span>
+            <span class="n">rowNum</span> <span class="o">+=</span> <span class="n">chunkRows</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+            <span class="n">chunkRows</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+            <span class="n">Future</span><span class="o">&lt;</span><span class="n">Chunk</span><span class="o">&gt;</span> <span class="n">chunk</span> <span class="o">=</span> <span class="n">threadPoolExecutor</span><span class="o">.</span><span class="na">submit</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+                <span class="n">cr</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">comparator</span><span class="o">);</span>
+                <span class="k">return</span> <span class="nf">initialChunk</span><span class="o">(</span><span class="n">rn</span><span class="o">,</span> <span class="n">cr</span><span class="o">,</span> <span class="n">file</span><span class="o">);</span>
+            <span class="o">});</span>
+            <span class="n">splitFutureList</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">chunk</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">line</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+        <span class="k">break</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="n">chunkList</span> <span class="o">=</span> <span class="n">splitFutureList</span><span class="o">.</span><span class="na">stream</span><span class="o">().</span><span class="na">map</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">get</span><span class="o">).</span><span class="na">collect</span><span class="o">(</span><span class="n">Collectors</span><span class="o">.</span><span class="na">toList</span><span class="o">());</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<h1 id="线程池消费合并任务">线程池消费合并任务</h1>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><table style="margin: 0px"><tbody><tr><td class="gutter"><pre>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20</pre></td><td class="code"><pre class="highlight"><code><span class="kt">int</span> <span class="n">currentLevel</span> <span class="o">=</span> <span class="n">INITIAL_CHUNK_LEVEL</span><span class="o">;</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">Future</span><span class="o">&lt;</span><span class="n">Chunk</span><span class="o">&gt;&gt;</span> <span class="n">mergeFutureList</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+<span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">//从队列中获取一组chunk</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">Chunk</span><span class="o">&gt;</span> <span class="n">pollChunks</span> <span class="o">=</span> <span class="n">pollChunks</span><span class="o">(</span><span class="n">chunkQueue</span><span class="o">,</span> <span class="n">currentLevel</span><span class="o">);</span>
+    <span class="c1">//未取到同级chunk, 表示此级别应合并完成</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">CollectionUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">pollChunks</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">mergeFutureList</span><span class="o">.</span><span class="na">stream</span><span class="o">().</span><span class="na">map</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">get</span><span class="o">).</span><span class="na">forEach</span><span class="o">(</span><span class="nl">chunkQueue:</span><span class="o">:</span><span class="n">add</span><span class="o">);</span>
+        <span class="n">mergeFutureList</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+        <span class="c1">//chunkQueue 中只有一个元素，表示此次合并是最终合并</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">chunkQueue</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">break</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">currentLevel</span><span class="o">++;</span>
+            <span class="k">continue</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">Future</span><span class="o">&lt;</span><span class="n">Chunk</span><span class="o">&gt;</span> <span class="n">chunk</span> <span class="o">=</span> <span class="n">threadPoolExecutor</span><span class="o">.</span><span class="na">submit</span><span class="o">(()</span> <span class="o">-&gt;</span> <span class="n">merge</span><span class="o">(</span><span class="n">pollChunks</span><span class="o">,</span> <span class="n">original</span><span class="o">));</span>
+    <span class="n">mergeFutureList</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">chunk</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></td></tr></tbody></table></div></div>
+
+<p>可以看到合并任务与拆分任务有些不同，拆分任务是在循环退出后才执行<code class="highlighter-rouge">Future.get</code>，因为拆分不用考虑先后；
+而合并任务在每次获取当前阶段的chunk结束时执行<code class="highlighter-rouge">Future.get</code>，这样才能避免不同的阶段之间产生混乱。</p>
+
+<p><a href="https://github.com/bit-ranger/architecture/blob/d9083d2fb71763557e6d4eb6875f9c001fd41596/core/src/main/java/com/rainyalley/architecture/core/arithmetic/sort/FileSorter.java">完整代码</a></p>
+
+<h1 id="测试">测试</h1>
+
+<p>在上一篇中，使用单线程，1千万条数据排序耗时13秒；
+在同一台电脑上，使用多线程后，耗时6秒，时间减少了一半。</p>
+
+<p>在拆分过程中，每个线程都要在内存中进行排序，
+在拆分和合并过程中，每个线程都要持有自己的读写缓冲区，这无疑会增大内存的使用量。</p>
+
+<p>究竟消耗了多少内存，我们可以使用<code class="highlighter-rouge">Java Mission Control</code>来观察，jdk8的bin目录下<code class="highlighter-rouge">jmc.exe</code>即为此工具。</p>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            
+            <a href="/tag/#/java" rel="tag"># java</a>
+          
+            
+            <a href="/tag/#/%E7%AE%97%E6%B3%95" rel="tag"># 算法</a>
+          
+            
+            <a href="/tag/#/algorithm" rel="tag"># algorithm</a>
+          
+            
+            <a href="/tag/#/%E6%8E%92%E5%BA%8F" rel="tag"># 排序</a>
+          
+            
+            <a href="/tag/#/concurrent" rel="tag"># concurrent</a>
+          
+        </div>
+      
+
+      
+      
+      
+      
+      
+
+      
+      
+        <div class="post-nav" id="post-nav-id">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/%E8%A7%86%E9%A2%91/playready/2019/06/11/PlayReady%E7%94%9F%E6%80%81/" rel="next" title="PlayReady生态">
+                <i class="fa fa-chevron-left"></i> PlayReady生态
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/blog-gh-pages/algorithm/2018/03/26/large-file-diff/" rel="prev" title="大文件内容对比">
+                大文件内容对比 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+      
+
+      
+    </footer>
+  </article>
+
+  <div class="post-spread">
+    
+  </div>
+</div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        
+        
+        
+
+
+
+
+
+
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/assets/images/avatar.gif"
+               alt="MORE" />
+          <p class="site-author-name" itemprop="name">MORE</p>
+           
+              <p class="site-description motion-element" itemprop="description">MORE技术分享，记录每天的进步！</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/">
+                <span class="site-state-item-count">64</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+        
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+
+
+
+
+
+
+
+            
+              <div class="post-toc-content">
+    <ol class=nav>
+      <li class="nav-item nav-level-1"> <a class="nav-link" href="#线程池"> <span class="nav-number">1</span> <span class="nav-text">线程池</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#线程池消费拆分任务"> <span class="nav-number">2</span> <span class="nav-text">线程池消费拆分任务</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#线程池消费合并任务"> <span class="nav-number">3</span> <span class="nav-text">线程池消费合并任务</span> </a> </li> <li class="nav-item nav-level-1"> <a class="nav-link" href="#测试"> <span class="nav-number">4</span> <span class="nav-text">测试</span> </a> </li>
+    </ol>
+  </div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MORE</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+   
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/assets/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/assets/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/assets/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/assets/js/src/post-details.js?v=5.1.1"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/assets/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+    
+
+  
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
+

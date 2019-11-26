@@ -1,0 +1,920 @@
+
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/assets/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/assets/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/assets/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="PlayReady,DRM,内容保护," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="MORE技术分享" type="application/atom+xml" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="For rental content, the license delivered for the content specifies an expiration date and time. After this date and time occurs, the content may still be on the user’s device, and the license may still also be persisting in the user’s device’s data store, but the PlayReady Client in the user’s device will use the device’s clock system to verify if the license is still valid, and enforce the expiration set by the service in the license.">
+<meta name="keywords" content="PlayReady, DRM, 内容保护">
+<meta property="og:type" content="article">
+<meta property="og:title" content="内容租借场景">
+<meta property="og:url" content="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/02/%E5%86%85%E5%AE%B9%E7%A7%9F%E5%80%9F%E5%9C%BA%E6%99%AF/">
+<meta property="og:site_name" content="MORE技术分享">
+<meta property="og:description" content="For rental content, the license delivered for the content specifies an expiration date and time. After this date and time occurs, the content may still be on the user’s device, and the license may still also be persisting in the user’s device’s data store, but the PlayReady Client in the user’s device will use the device’s clock system to verify if the license is still valid, and enforce the expiration set by the service in the license.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="/assets/pr-rental/rental.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="内容租借场景">
+<meta name="twitter:description" content="For rental content, the license delivered for the content specifies an expiration date and time. After this date and time occurs, the content may still be on the user’s device, and the license may still also be persisting in the user’s device’s data store, but the PlayReady Client in the user’s device will use the device’s clock system to verify if the license is still valid, and enforce the expiration set by the service in the license.">
+<meta name="twitter:image" content="/assets/pr-rental/rental.png">
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://localhost:4000/"/>
+
+
+
+
+
+  <title>内容租借场景 | MORE技术分享</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">MORE技术分享</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+<div id="posts" class="posts-expand">
+  
+  
+
+  
+
+  
+  
+  
+
+  <article class="post post-type- " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/02/%E5%86%85%E5%AE%B9%E7%A7%9F%E5%80%9F%E5%9C%BA%E6%99%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="MORE">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="assets/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MORE技术分享">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+          
+          
+            内容租借场景
+          
+        </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-02T00:00:00+08:00">
+                2019-08-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/category/#/%E8%A7%86%E9%A2%91" itemprop="url" rel="index">
+                    <span itemprop="name">视频</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/category/#/PlayReady" itemprop="url" rel="index">
+                    <span itemprop="name">PlayReady</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+            
+                <div class="post-description">
+                    
+                </div>
+            
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <p>For rental content, the license delivered for the content specifies an expiration date and time. After this date and time occurs, the content may still be on the user’s device, and the license may still also be persisting in the user’s device’s data store, but the PlayReady Client in the user’s device will use the device’s clock system to verify if the license is still valid, and enforce the expiration set by the service in the license.</p>
+
+<p>In addition, it is a recommended good practice to set a begin date and time (typically the date and time that the user paid for the content). This will help protect the system in some cases where the user would be able to roll back the clock of their device.</p>
+
+<p>An alternative is for the service to provide a limitation in the license in terms of a time span that indicates when the license will expire after the first play. This allows the service provider to issue a license that could begin at some time in the future, expire at a specified time, and/or expire after a specified duration, after the content is first played.</p>
+
+<p>A typical example would be:</p>
+<ul>
+  <li>A user rents content on Friday, January 5, 2018 at 8 PM.</li>
+  <li>The license delivered to the user includes the following restrictions:</li>
+  <li>Right — Play (right to decrypt content to render on a screen)</li>
+  <li>Begin Time — January 5, 2018 at 7:55 PM (the begin time is slightly in the past to account for any minor clock difference between client and Server)</li>
+  <li>Expiration Time — February 5, 2018 at 8:00 PM (a month later)</li>
+  <li>Expiration After First Play — 48 hours (2 full days after user has started to play)</li>
+</ul>
+
+<p>Because rental content generally requires start and expiration times, the client will be required to support some type of PlayReady trusted clock. For more information, see Trusted Clocks.</p>
+
+<p>The following figure indicates the interactions between clients and Servers in the rental content scenario.</p>
+
+<p><img src="/assets/pr-rental/rental.png" alt="" /></p>
+
+<p>The rental content scenario performs the following steps, as illustrated in the figure:</p>
+<ol>
+  <li>Content that will be distributed to clients is protected with Microsoft PlayReady technology.</li>
+  <li>The service provider transfers content protection information to a License Server.</li>
+  <li>The service provider transfers protected content to a Server for distribution over the Web.</li>
+  <li>A client requests content for streaming or download.</li>
+  <li>The client acquires a license and either begins streaming or downloading the content from the content Server using an Internet protocol such as SSTP, DASH, HLS, or HTTP. While the client is streaming or downloading the content, it can decrypt the content and the decrypted content can be continuously played back.</li>
+</ol>
+
+<p>The most common delivery mechanisms for rental content is to stream the protected content from a Web service, or to download the content onto a local device and then play the content.</p>
+
+<h2 id="streaming-rental-content">Streaming rental content</h2>
+<p>When streaming rental media, content continuously plays back while it’s being transferred from the Web Server. The following technical aspects should be considered when implementing rental content that is streamed to user devices.</p>
+<ul>
+  <li>PlayReady supports many kinds of protocols. There is no restriction for any protocol. However, PlayReady Clients usually support one or many of the following standards: SSTP (Smooth Streaming), DASH (Dynamic Adaptive Streaming over HTTP), HLS (HTTP Live Streaming). In addition to these protocols, it is perfectly acceptable and doable for a service that controls both its backend and clients to implement a different protocol, for example multicast TS on a closed network.</li>
+  <li>The format of the content is typically H264 + AAC, or H265 + AAC, but all other codecs are allowed by PlayReady.</li>
+  <li>Streaming rental content can use either a persistent or non-persistent license.
+The most obvious case would be non-persistent licenses. Non-persistent licenses are stored in volatile memory (RAM) and only last for as long as the current session. Non-persistent licenses are well adapted to the streaming scenario, because for streaming, the device has to be connected anyway, and can afford acquiring a non-persistent license just in time at the time of playback.
+A non-persistent license that is pre-acquired will also shorten the time to first frame. For more information, see License Generation and Issuance.
+Another way to optimize the time to first frame when streaming rental content is to leverage “PlayReady Limited Duration Licenses.” While the user is presented a page with a list of videos to select, licenses with a very small duration are pre-acquired in the background (typically thirty seconds). These licenses include the restriction “Real Time Expiration,” which ensure that the client will actually stop playing back with this license after thirty seconds. Then the user can select one of the listed videos to play. At this time, playback can start immediately. The player requests a full rental license (for 48 hours) for the video selected by the user, and the player then seamlessly binds to the rental license while playing back. This optimization is possible on PlayReady version 3.0 or later clients, which support real time expiration and non-persistent license delivery in batches.</li>
+  <li>It is possible to use persistent licenses for streaming scenarios as well. Persistent licenses are stored in non-volatile memory (in the local data store) and last for the lifetime of the store or until a time-based restriction is reached.</li>
+</ul>
+
+<h2 id="download-and-play-rental-content">Download and play rental content</h2>
+<p>Rental content can also be downloaded to the client before playback can begin. Typically this is done to achieve a constant quality of the content not correlated with the network quality, but may require some delay before the playback can actually start.</p>
+
+<p>The following technical aspects should be considered when implementing rental content that is downloaded and played.</p>
+<ul>
+  <li>The content may be downloaded as a simple file through HTTP, if the content is already authored in the right format for the device. Another option is that the client retrieves the successive fragments of an adaptive streaming asset over the streaming protocol (SSTP, DASH, HLS, other) and packs them all on the device’s local storage for further play back, in the form of a single fragmented file or a collection of fragment files. The latter allows more sophisticated scenarios like late binding, which is the ability for a client to select different tracks based on its preferences. For example, pick one video quality among multiple qualities, one particular audio track, or a subtitle track, independent of the initial content authoring on the backend.</li>
+  <li>Download and play rental content can also use either a persistent or non-persistent license. Typically, a predelivery persistent license would be preferred.</li>
+  <li>When using persistent licenses, the device may occasionally need to remove licenses from the data store after their expiration.</li>
+  <li>Like all persistent licenses that include an expiration date, they should also include a begin date that helps prevent some user attacks against the device’s trusted clock system.</li>
+</ul>
+
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            
+            <a href="/tag/#/PlayReady" rel="tag"># PlayReady</a>
+          
+            
+            <a href="/tag/#/DRM" rel="tag"># DRM</a>
+          
+            
+            <a href="/tag/#/%E5%86%85%E5%AE%B9%E4%BF%9D%E6%8A%A4" rel="tag"># 内容保护</a>
+          
+        </div>
+      
+
+      
+      
+      
+      
+      
+
+      
+      
+        <div class="post-nav" id="post-nav-id">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/%E8%A7%86%E9%A2%91/playready/2019/08/03/%E5%86%85%E5%AE%B9%E8%AE%A2%E9%98%85%E5%9C%BA%E6%99%AF/" rel="next" title="内容订阅场景">
+                <i class="fa fa-chevron-left"></i> 内容订阅场景
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/%E8%A7%86%E9%A2%91/playready/2019/07/30/%E8%BE%93%E5%87%BA%E4%BF%9D%E6%8A%A4%E7%AD%89%E7%BA%A7/" rel="prev" title="输出保护等级">
+                输出保护等级 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+      
+
+      
+    </footer>
+  </article>
+
+  <div class="post-spread">
+    
+  </div>
+</div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        
+        
+        
+
+
+
+
+
+
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/assets/images/avatar.gif"
+               alt="MORE" />
+          <p class="site-author-name" itemprop="name">MORE</p>
+           
+              <p class="site-description motion-element" itemprop="description">MORE技术分享，记录每天的进步！</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/">
+                <span class="site-state-item-count">64</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+        
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+
+
+
+
+
+
+
+            
+              <div class="post-toc-content">
+    <ol class=nav>
+      <li class="nav-item nav-level-2"> <a class="nav-link" href="#streaming-rental-content"> <span class="nav-number">1</span> <span class="nav-text">Streaming rental content</span> </a> </li> <li class="nav-item nav-level-2"> <a class="nav-link" href="#download-and-play-rental-content"> <span class="nav-number">2</span> <span class="nav-text">Download and play rental content</span> </a> </li>
+    </ol>
+  </div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">MORE</span>
+</div>
+
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+   
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  
+  
+  
+  
+  <script type="text/javascript" src="/assets/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/assets/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/assets/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  <script type="text/javascript" src="/assets/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/assets/js/src/post-details.js?v=5.1.1"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/assets/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+
+    
+
+  
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
+

@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.7.4">Jekyll</generator><link href="http://localhost:4000/atom.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2019-11-26T16:57:49+08:00</updated><id>http://localhost:4000/atom.xml</id><title type="html">MORE技术分享</title><subtitle>MORE技术分享，记录每天的进步！</subtitle><author><name>MORE</name></author><entry><title type="html">HLS视频加密</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/hls/2019/09/01/HLS%E8%A7%86%E9%A2%91%E5%8A%A0%E5%AF%86/" rel="alternate" type="text/html" title="HLS视频加密" /><published>2019-09-01T00:00:00+08:00</published><updated>2019-09-01T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/hls/2019/09/01/HLS%E8%A7%86%E9%A2%91%E5%8A%A0%E5%AF%86</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/hls/2019/09/01/HLS%E8%A7%86%E9%A2%91%E5%8A%A0%E5%AF%86/">&lt;p&gt;这里我们要介绍HLS视频加密以及如何使用ffmpeg来加密视频。HLS只支持AES-128加密算法。AES是固定长度块对称加密算法。AES-128使用128位密钥。HLS按照密码块链接(cipher block chaining，CBC)模式来执行AES加密。CBC模式使用一个链接机制，每个块的加密操作都依赖于前面一个的密文块。在密码块链接中，每个明文块是与前一个的密文块异或(XOR)，然后再加密。对于第一个块，CBC使用一个初始化向量(initialisation vector，IV)来替代。IV是一个16字节的值，可以随机生成或者制定。IV不需要保密。一位错误解密的密文块影响所有后续块。重新排列的顺序导致解密密文块会损坏。&lt;/p&gt;
+
+&lt;p&gt;我们需要先使用OpenSSL生成一个128位加密密钥。&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;openssl rand 16 &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; enc.key 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;下面生成一个IV。&lt;/p&gt;
+
+&lt;div class=&quot;language-sh highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;openssl rand &lt;span class=&quot;nt&quot;&gt;-hex&lt;/span&gt; 16
+ecd0d06eaf884d8226c33928e87efa33
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;ffmpeg需要知道加密密钥、密钥的URI、IV。我们按照下面格式写进一个文件并通过参数-hls_key_info_file传给ffmpeg。密钥的URI会被写入生成的playlist。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Key URI
+Path to key file
+IV (optional)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;比如&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;https://hlsbook.net/enc.key
+enc.key
+ecd0d06eaf884d8226c33928e87efa33 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;用ffmpeg来加密打包视频。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ffmpeg -y \
+    -i sample.mov \
+    -hls_time 9 \
+    -hls_key_info_file enc.keyinfo
+    -hls_playlist_type vod \
+    -hls_segment_filename &quot;fileSequence%d.ts&quot; \
+    prog_index.m3u8
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;生成的playlist (prog_index.m3u8)基本上这个样子。播放器会按照playlist中的密钥URI来获得密钥。所以这里应该使用HTTPS并且加上认证效验来保护密钥。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:9
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-KEY:METHOD=AES-128,URI=&quot;https://hlsbook.net/enc.key&quot;,IV=0xecd0d06eaf884d8226c33928e87efa33
+#EXTINF:8.33333
+fileSequence0.ts
+#EXTINF:8.33333
+fileSequence1.ts
+#EXTINF:8.33333
+fileSequence2.ts
+#EXTINF:8.33333
+fileSequence3.ts
+#EXTINF:8.33333
+fileSequence4.ts
+#EXTINF:5.66667
+fileSequence5.ts
+#EXT-X-ENDLIST
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">这里我们要介绍HLS视频加密以及如何使用ffmpeg来加密视频。HLS只支持AES-128加密算法。AES是固定长度块对称加密算法。AES-128使用128位密钥。HLS按照密码块链接(cipher block chaining，CBC)模式来执行AES加密。CBC模式使用一个链接机制，每个块的加密操作都依赖于前面一个的密文块。在密码块链接中，每个明文块是与前一个的密文块异或(XOR)，然后再加密。对于第一个块，CBC使用一个初始化向量(initialisation vector，IV)来替代。IV是一个16字节的值，可以随机生成或者制定。IV不需要保密。一位错误解密的密文块影响所有后续块。重新排列的顺序导致解密密文块会损坏。</summary></entry><entry><title type="html">内容加密</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/20/%E5%86%85%E5%AE%B9%E5%8A%A0%E5%AF%86/" rel="alternate" type="text/html" title="内容加密" /><published>2019-08-20T00:00:00+08:00</published><updated>2019-08-20T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/20/%E5%86%85%E5%AE%B9%E5%8A%A0%E5%AF%86</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/20/%E5%86%85%E5%AE%B9%E5%8A%A0%E5%AF%86/">&lt;p&gt;The basic capability of PlayReady is to protect content from unauthorized use, or unwanted malicious attacks. To do this, your content must first be encrypted, and an associated PlayReady Header be inserted in the content. The system that does this operation is the encryptor, also known as the packager, which is sometimes integrated with the encoder. You can either design this system yourself, or you could contract with a PlayReady Partnerto supply this functionality for you.&lt;/p&gt;
+
+&lt;p&gt;This topic describes various ways to encrypt and deliver your content using PlayReady.&lt;/p&gt;
+
+&lt;h2 id=&quot;packaging-playready-contentencrypting-and-inserting-the-drm-header&quot;&gt;Packaging PlayReady content—Encrypting and inserting the DRM header&lt;/h2&gt;
+&lt;p&gt;The process of encrypting clear content consists of defining one or several encryption keys, using these keys to encrypt the bytes that constitute the content itself, and inserting a DRM header in the content (in the files of the content, or in the manifest if the content has one).&lt;/p&gt;
+
+&lt;p&gt;All encrypted content protected by PlayReady must have a PlayReady Header inserted in the encrypted file. This PlayReady Header is used by a PlayReady Client to locate or acquire a license for that particular piece of content. A PlayReady Header is composed of XML strings that are encoded using UTF-16. It includes the key identifiers (KIDs) that are used to encrypt the content, a default URL that the client will use to acquire a license from if no other is provided, and any custom attributes.&lt;/p&gt;
+
+&lt;p&gt;Any packager that packages clear content needs to implement a PlayReady Header generator to build the header and embed it in the encrypted content. The PlayReady Header must be implemented according to the PlayReady Header Specification. There are multiple ways to create a PlayReady Header generator in your packager:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Develop it yourself based on the PlayReady Header Specification.&lt;/li&gt;
+  &lt;li&gt;Use the PlayReady Server SDK API that generates a PlayReady Header.&lt;/li&gt;
+  &lt;li&gt;Use the Windows 10 API that generates a PlayReady Header.&lt;/li&gt;
+  &lt;li&gt;Use the PlayReady Device Porting Kit API that generates a PlayReady Header.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Your encrypted content can contain multiple DRM headers, including PlayReady Headers along with third-party DRM headers. For more information on how this works, see Using encryption tools.&lt;/p&gt;
+
+&lt;h2 id=&quot;encryption-tools&quot;&gt;Encryption tools&lt;/h2&gt;
+&lt;p&gt;Microsoft does not include a packager in the PlayReady deliverables. Instead, PlayReady works with Standards in which services commonly use common encryption. Therefore the encryption format is not PlayReady specific, rather it’s a function of the file format. The most widely used encryption format today is the Common Encryption ISO Standard format, ISO/IEC 23001-7.&lt;/p&gt;
+
+&lt;p&gt;Basically, you could either create your own packager, or you could work with any type of open source encryptor (such as ffmpeg). In addition, you could work with a professional encoder company if you want to encrypt content with PlayReady (such as Harmonic, Elemental, Ericsson, Wowza, Allegro). Azure Media Services also provides a packaging functionality for clear content.&lt;/p&gt;
+
+&lt;h2 id=&quot;using-encryption-tools&quot;&gt;Using encryption tools&lt;/h2&gt;
+&lt;p&gt;The process to encrypt an asset with multiple DRMs or common technologies is Common Encryption. This process is basically the same as described in Basic encryption and licensing process, except that the particular key that is going to be used to encrypt the asset is going to be published in a header for PlayReady (and this header is not going to include the value of the keys, but is going to include the value of the KIDs). Then other headers are going to be potentially included in the asset for other DRMs. All those headers will have their own syntax that designates the KIDs or the information required to ultimately access the content keys. But the content keys for this asset are going to be the same for all the DRMs.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/tools.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;using-encryption-keys&quot;&gt;Using encryption keys&lt;/h2&gt;
+&lt;p&gt;There are many different ways to encrypt your assets. The simplest one to the most sophisticated one depends on how much complexity you want to bring in the system and what the needs of the service are.&lt;/p&gt;
+
+&lt;p&gt;Let’s take for example, an adaptive streaming asset, as shown in the figure below. It has four different video qualities, one audio track, and one subtitle track. It is encoded in fragmented MP4 files, with fragments of 2.0 seconds each. It is one asset that is served in multiple different formats depending on what the client would prefer to play back. Smooth Streaming, HLS, and DASH are the most common variants. During playback, the client (the video player) is going to successively download the fragments of the asset over the network, selecting for each playback time the video fragment from the adequate video track, in order to keep playback quality as high as possible, given the constraints of the network bandwidth, the playback speed, and other limited resources like the player capabilities. This logic is known as adaptive streaming playback, governed by some heuristics rules implemented in the player.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/keys.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;encrypting-the-asset-with-just-one-key&quot;&gt;Encrypting the asset with just one key&lt;/h2&gt;
+&lt;p&gt;The simplest way to encrypt these assets would be to use a single content key to encrypt everything (typically subtitles are not encrypted - it’s not against any rule, but they are usually kept in the clear). Using one content key makes life easy for the License Server because the License Server has to deliver one key {KID, CK}. This key would typically be acquired by the client before playback occurred.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/one-key.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&quot;note&quot;&gt;Note&lt;/h5&gt;
+&lt;p&gt;PlayReady Clients can acquire licenses proactively or reactively. See the License Acquisition page for a description of these two modes.&lt;/p&gt;
+
+&lt;h2 id=&quot;encrypting-the-asset-with-two-keys-dedicating-one-to-the-highest-quality&quot;&gt;Encrypting the asset with two keys, dedicating one to the highest quality&lt;/h2&gt;
+&lt;p&gt;There have been some enhancements in the past years to use multiple keys per asset, mostly driven by the requirement to allow only certain highest-robustness clients to consume the highest quality content. With the arrival of Ultra HD (4K) content, and with the addition of high dynamic range (HDR) for higher color content, there was a need by studios and services to allow the highest quality only on certain clients, which typically have hardware DRM built in. In this scenario, the asset is encrypted using one content key {kid1, ck1} for all the tracks, except for the 4K track that is encrypted using a different content key {kid2, ck2}. That is:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;A client that is allowed to play only up to Full HD (not the 4K track) will be delivered a PlayReady license including only {kid1, ck1}.&lt;/li&gt;
+  &lt;li&gt;A client that is allowed to play up to 4K will be delivered a PlayReady license including {kid1, ck1} and {kid2, ck2}.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Using this additional complexity, the service can ensure that some clients will not be able to decrypt the 4K track, and that 4K track can be reserved to only the clients that the service most trusts.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/two-keys.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;encrypting-the-asset-with-one-key-per-track&quot;&gt;Encrypting the asset with one key per track&lt;/h2&gt;
+&lt;p&gt;Now, the service may have a more complex map of rights to enforce. Some clients, depending on their screen size, their robustness, their outputs, and their location, may be allowed to access only some video tracks, some video qualities, and some audio tracks. To ensure the service has full flexibility in enforcing an arbitrary set of restrictions in the future, it may encrypt an asset with a content key specific to each track. For example:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;A client that is allowed to play only 720p will be delivered a PlayReady license including {kid1, ck1}, {kid2, ck2}, and {kidA, ckA}.&lt;/li&gt;
+  &lt;li&gt;A client that is allowed to play up to 4K will be delivered a PlayReady license including {kid1, ck1}, {kid2, ck2}, {kid3, ck3}, {kid4, ck4}, and {kidA, ckA}.&lt;/li&gt;
+  &lt;li&gt;A client playing offline the 4K version of the asset (previously downloaded) will be delivered a PlayReady license including {kid4, ck4} and {kidA, ckA}.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/key-per-track.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;changing-the-encryption-keys-periodically-multi-period-assetlicense-rotation&quot;&gt;Changing the encryption keys periodically (multi-period asset)—license rotation&lt;/h2&gt;
+&lt;p&gt;In some scenarios, the service wants to change the encryption keys occasionally, typically at program boundaries. For example, a live linear stream has multiple periods with free to air content that you want everyone to have access to, followed by some content that is restricted to subscribers. Changing the encryption keys at program boundaries allows the service to deliver the free to air keys {KIDi1, CKi1} to all users without any restrictions, and deliver the content keys {kidi2, cki2} only to the subscribers that have successfully logged in the service.&lt;/p&gt;
+
+&lt;p&gt;Note that this license rotation is not very scalable: every time the encryption keys change, all clients request the new encryption keys using their own license request. This can result is a high peak of license requests in systems with a large number of clients.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/rotation.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;changing-the-encryption-keys-frequentlyscalable-key-rotation&quot;&gt;Changing the encryption keys frequently—scalable key rotation&lt;/h2&gt;
+&lt;p&gt;There is an advanced mechanism in PlayReady called scalable key rotation (as opposed to license rotation). This method stores an Embedded License Store (ELS) in the stream of the actual content. In this mechanism, the key used to encrypt the A2 fragment itself is called the leaf key {kidA2, ckA2}, and is delivered in the ELS of the fragment A2, being itself encrypted with a separate key that is the same for all the fragments of track A, called the root key {kidRA, ckRA}. If you are familiar with MPEG-2 TS and the Control Word encryption, this is a similar mechanism except for the encryption is much stronger and is also more flexible.&lt;/p&gt;
+
+&lt;p&gt;Let’s say this asset is live linear TV. When the client attempts playback, it finds kidRA in the PlayReady Header of the stream manifest, and requests a license for kidRA. The License Server returns a root license for the root key {kidRA, ckRA}. Then the client parses the fragment A1 and discovers the ELS in the header of the fragment. Parsing this ELS, it finds the leaf license {kidA1, ckA1} in this ELS. Using the root key {kidRA, ckRA} and the leaf license {kidA1, ckA1}, it can get the value of ckA1, and decrypt and render the fragment A1.&lt;/p&gt;
+
+&lt;p&gt;The PlayReady scalable key rotation feature is extremely scalable because it does not require the clients to hit the License Server every time the encryption keys are changed. It keeps the volume of license requests to the lowest possible, as a client only needs one root license from the License Server per stream, or track. It allows encryption keys to rotate as frequently as every fragment, typically every 2 seconds if necessary.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-enc/scalable-rotation.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">The basic capability of PlayReady is to protect content from unauthorized use, or unwanted malicious attacks. To do this, your content must first be encrypted, and an associated PlayReady Header be inserted in the content. The system that does this operation is the encryptor, also known as the packager, which is sometimes integrated with the encoder. You can either design this system yourself, or you could contract with a PlayReady Partnerto supply this functionality for you.</summary></entry><entry><title type="html">直播场景</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/05/%E7%9B%B4%E6%92%AD%E5%9C%BA%E6%99%AF/" rel="alternate" type="text/html" title="直播场景" /><published>2019-08-05T00:00:00+08:00</published><updated>2019-08-05T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/05/%E7%9B%B4%E6%92%AD%E5%9C%BA%E6%99%AF</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/05/%E7%9B%B4%E6%92%AD%E5%9C%BA%E6%99%AF/">&lt;p&gt;In the live TV scenario, a service sends live streams to users and users’ clients on the Internet (Over The Top, OTP) or in a closed network (IPTV for operators).&lt;/p&gt;
+
+&lt;p&gt;The client may be a TV set, a phone application, a tablet, a PC, or any PlayReady embedded device.&lt;/p&gt;
+
+&lt;p&gt;Standard PlayReady licenses may be used. In this case, a channel in a bundle will have its own KID and encryption key, and clients willing to consume this channel request a PlayReady license for this KID.&lt;/p&gt;
+
+&lt;p&gt;In many cases, the service may want to change (that is, rotate) the encryption key of each channel sometimes, typically every 24 hours, every week, or every month. Simple PlayReady licenses can manage this scenario; however the client will have to reacquire a license for a channel every time the channel’s key rotates, which might not be seamless (the user will experience a short drop out).&lt;/p&gt;
+
+&lt;p&gt;In addition, the service may have dozens, hundreds, or thousands or channels available, and hundreds of different combinations (bundles) available to users depending on the level that they pay, and their geography.&lt;/p&gt;
+
+&lt;p&gt;A more sophisticated and scalable way of implementing a large scale TV protection system is to leverage PlayReady scalable licenses with key rotation. In this model, the license of each channel is chained, and a scalable root license and leaf license are needed to consume the content. A scalable root license gives access to the TV bundle that a user has registered. The root license can also contain the region information to which the client belongs; the region information is used when clients in a specific region need to be blacked out for a specific TV service. A scalable leaf license is embedded in the content itself (typically in a pssh box of a MP4 stream, or in a ECM segment of a TS stream), and it contains an encrypted version of the channel key.&lt;/p&gt;
+
+&lt;p&gt;Both the root and leaf keys in a live TV scenario should be rotated to ensure maximum robustness, to optimize the head end, and monetize a pay channel through pay-per-view.&lt;/p&gt;
+
+&lt;p&gt;Note that PlayReady scalable licenses with key rotation also allows you to implement the following optimized backend architecture for both Live TV and pay per view:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;A live channel is encrypted using scalable leaf licenses, and the key is rotated at each program boundary. The channel is archived and encrypted, and each program is delivered to non-subscribers as a single piece of video, in a pay-per-view model.&lt;/li&gt;
+  &lt;li&gt;A live subscriber of the service gets a scalable license that gives access to all the leaf licenses of this channel. This user pays a subscription fee per month.&lt;/li&gt;
+  &lt;li&gt;A non subscriber downloads a particular program and acquires a simple license for this particular program. This user pays a single fee per program downloaded, which may vary depending on the rights he paid for (such as download to own, rent for 48 hours, rent in 4K quality for 48 hours, and so on).&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">In the live TV scenario, a service sends live streams to users and users’ clients on the Internet (Over The Top, OTP) or in a closed network (IPTV for operators).</summary></entry><entry><title type="html">内容购买场景</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/04/%E5%86%85%E5%AE%B9%E8%B4%AD%E4%B9%B0%E5%9C%BA%E6%99%AF/" rel="alternate" type="text/html" title="内容购买场景" /><published>2019-08-04T00:00:00+08:00</published><updated>2019-08-04T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/04/%E5%86%85%E5%AE%B9%E8%B4%AD%E4%B9%B0%E5%9C%BA%E6%99%AF</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/04/%E5%86%85%E5%AE%B9%E8%B4%AD%E4%B9%B0%E5%9C%BA%E6%99%AF/">&lt;p&gt;In the purchased content scenario, a content owner sells media to consumers using an online media store. Online media stores can include thousands of movies or millions of songs available for sale, and they can serve hundreds of thousands of customers. In current examples, license acquisition occurs between the content provider’s store interface, built using the PlayReady Server SDK.&lt;/p&gt;
+
+&lt;p&gt;The following figure illustrates how the various components interact in a purchased content scenario.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-purchase/purchase.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The purchased content scenario performs the following steps:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;The service provider transfers unprotected content to the content packager.&lt;/li&gt;
+  &lt;li&gt;The content packager protects the file by using an encryption format that is compatible with PlayReady (for example, MPEG Common Encryption CENC CTR).
+This “packaged” file may then be distributed using a variety of methods.&lt;/li&gt;
+  &lt;li&gt;The content provider distributes content by using Web Servers or other transfer mechanisms.
+When distributing protected content, the content owner must use License Servers to indicate rights to be included in licenses issued for the content. These rules (and information needed to determine the content key) are given to a License Server, which then has all the information necessary to create licenses for that content.&lt;/li&gt;
+  &lt;li&gt;On the consumer/media consumer side, users browse the content store and download or stream content using their devices. The client determines when protected content requires a license.&lt;/li&gt;
+  &lt;li&gt;The client then sends a license request to a License Server.&lt;/li&gt;
+  &lt;li&gt;Based on specific business rules, the License Server issues a license for that particular piece of content. The License Server may require customer identification or payment before issuing a license. The license contains the content key, which allows the client’s media player to access the content.&lt;/li&gt;
+  &lt;li&gt;The user can play the content, according to the conditions specified in the license.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The figure above illustrates either a download-and-play model or a streaming model. Other scenarios would lead to a slightly different illustration. For example, live streaming would perform the packaging/encryption in real-time in step 2.&lt;/p&gt;
+
+&lt;p&gt;Optionally, purchased content can be shared across devices using domains and embedded licenses. For more information, see PlayReady Domainsand Embedded Licenses.&lt;/p&gt;
+
+&lt;p&gt;For content that was purchased to own, users expect the content to play indefinitely on their devices. Services would most likely issue licenses for this content with no expiration at all. However, because users change devices frequently, and because each device may change its PlayReady identity some time (when a re-individualization is run, or when a device is completely reinstalled), services should be ready at any time to re-issue licenses for purchased content that was previously delivered to a user or a device.&lt;/p&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">In the purchased content scenario, a content owner sells media to consumers using an online media store. Online media stores can include thousands of movies or millions of songs available for sale, and they can serve hundreds of thousands of customers. In current examples, license acquisition occurs between the content provider’s store interface, built using the PlayReady Server SDK.</summary></entry><entry><title type="html">内容订阅场景</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/03/%E5%86%85%E5%AE%B9%E8%AE%A2%E9%98%85%E5%9C%BA%E6%99%AF/" rel="alternate" type="text/html" title="内容订阅场景" /><published>2019-08-03T00:00:00+08:00</published><updated>2019-08-03T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/03/%E5%86%85%E5%AE%B9%E8%AE%A2%E9%98%85%E5%9C%BA%E6%99%AF</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/03/%E5%86%85%E5%AE%B9%E8%AE%A2%E9%98%85%E5%9C%BA%E6%99%AF/">&lt;p&gt;Microsoft PlayReady enables scenarios in which a content owner sells subscriptions to a catalog of music or video using an online media store.&lt;/p&gt;
+
+&lt;p&gt;Because a PlayReady Server doesn’t include any business logic but can, however, be linked to any business logic backend (through web services), the delivery of PlayReady licenses for subscription content can be the same as for rental content. So, the client will request individual licenses for each piece of content (video, music) that has to be played.&lt;/p&gt;
+
+&lt;p&gt;Note that the service can deliver multiple licenses in one single license response for optimization purposes. For example,in a scenario where the client is playing an episode of a series, the client requests a license for the episode one when the user selects that video. The service may want to deliver licenses for all the episodes of the series at once in order to lower the gap between episodes. Delivering multiple licenses is even more beneficial for music when playing multiple tracks without any gaps.&lt;/p&gt;
+
+&lt;p&gt;In a subscription model where a large number of content pieces are played (for example, in a music service where the user downloads thousands of tracks to play offline), the client has to manage thousands of different licenses, one for each content. Because this is a subscription service (for example, it requires a monthly renewal), the licenses that are delivered have an expiration at the renewal date of the monthly subscription, and the user expects all the licenses to be renewed when the monthly fee is paid again.&lt;/p&gt;
+
+&lt;p&gt;To optimize this scenario, the service should use chained licenses. Each piece of content is bound to a unique leaf license. All leaf licenses are bound to the same root license. The leaf licenses do not have beginning and expiration times, but the root license has these beginning and expiration times. Therefore, only the root license must be reacquired upon subscription renewal. Additionally, devices that play subscription content must support a PlayReady trusted clock to enforce the subscription policy associated with playback licenses. For more information, see License Chaining.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-sub/sub.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The subscription content scenario performs the following steps, as illustrated in the figure.&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;The service provider transfers unprotected content to the content packaging Server. The service provider transfers the license to the License Server.&lt;/li&gt;
+  &lt;li&gt;The service provider transfers protected content to a Web Server for distribution.&lt;/li&gt;
+  &lt;li&gt;When the client is ready, it can acquire subscription content and a license that expires when the subscription ends.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The most common delivery mechanisms for subscription content is to stream the protected content from a Web service, or to download the content onto a local device and then play the content.&lt;/p&gt;
+
+&lt;h2 id=&quot;streaming-subscription-content&quot;&gt;Streaming subscription content&lt;/h2&gt;
+&lt;p&gt;In a subscription scenario, where the subscription allows a certain maximum number of concurrent streams (for example, three streams), the service may want to leverage PlayReady Secure Stop to enforce this number.&lt;/p&gt;
+
+&lt;p&gt;With adaptive streaming protocols over HTTP, the stream is HTTP cached and the streaming origin Server gets all the streaming requests. As a consequence, it is non-trivial for the service to count how many clients currently play one stream.&lt;/p&gt;
+
+&lt;p&gt;PlayReady Secure Stop solves this problem. PlayReady Secure Stop allows a service to be notified when a client stops playing a stream. Combined with non-persistent licenses, which allow the service to be notified when a client starts playing a stream, it allows the service to count in real time how many clients play a stream, or a collection of streams, under a particular account, and enforce this number.&lt;/p&gt;
+
+&lt;h2 id=&quot;download-and-play-subscription-content&quot;&gt;Download and play subscription content&lt;/h2&gt;
+&lt;p&gt;The following technical aspects should be considered when implementing subscription content that is downloaded and played.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Like rental or any other scenario, downloading a piece of content before playing back allows a constant quality of content not correlated with the network quality, but may require some delay before the playback can actually start. For example, if the network bandwidth is typically between 2 Mbps and 5 Mbps, averaging 4 Mbps, and the user pays for a full high definition (HD) stream at 4 Mbps, the only way to ensure a constant high quality is to pre-download the content. Progressive download allows the client to start downloading the content, then start playing back before the download is complete. In the above example, a prebuffering of 5 minutes may be enough to ensure the expected quality during playback.&lt;/li&gt;
+  &lt;li&gt;Other advantages of download delivery is to allow content consumption in environments with zero or low connectivity (for example, subways, commuter trains, airplanes, and so on).&lt;/li&gt;
+  &lt;li&gt;Services that want to do content push may want to leverage PlayReady metering. PlayReady metering allows a service to deliver a persistent license and get notified afterwards if the content has actually been played. Based on this information, the service can push content to a device and pay content owners, or invoice users, based on their actual consumption. Typically, this functionality would be helpful in the following scenario:
+    &lt;ol&gt;
+      &lt;li&gt;A user has a subscription for a video service.&lt;/li&gt;
+      &lt;li&gt;The user starts watching episode 1 of a TV series.&lt;/li&gt;
+      &lt;li&gt;The service pushes episodes 2, 3, and 4 to the device (the device application downloads these episodes, and the associated persistent licenses).&lt;/li&gt;
+      &lt;li&gt;The user gets disconnected in the subway.&lt;/li&gt;
+      &lt;li&gt;The user plays episodes 2 and 3.&lt;/li&gt;
+      &lt;li&gt;The user gets reconnected.&lt;/li&gt;
+      &lt;li&gt;The service gets notified that the user played episodes 1, 2, and 3, but not episode 4.&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">Microsoft PlayReady enables scenarios in which a content owner sells subscriptions to a catalog of music or video using an online media store.</summary></entry><entry><title type="html">内容租借场景</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/02/%E5%86%85%E5%AE%B9%E7%A7%9F%E5%80%9F%E5%9C%BA%E6%99%AF/" rel="alternate" type="text/html" title="内容租借场景" /><published>2019-08-02T00:00:00+08:00</published><updated>2019-08-02T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/02/%E5%86%85%E5%AE%B9%E7%A7%9F%E5%80%9F%E5%9C%BA%E6%99%AF</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/08/02/%E5%86%85%E5%AE%B9%E7%A7%9F%E5%80%9F%E5%9C%BA%E6%99%AF/">&lt;p&gt;For rental content, the license delivered for the content specifies an expiration date and time. After this date and time occurs, the content may still be on the user’s device, and the license may still also be persisting in the user’s device’s data store, but the PlayReady Client in the user’s device will use the device’s clock system to verify if the license is still valid, and enforce the expiration set by the service in the license.&lt;/p&gt;
+
+&lt;p&gt;In addition, it is a recommended good practice to set a begin date and time (typically the date and time that the user paid for the content). This will help protect the system in some cases where the user would be able to roll back the clock of their device.&lt;/p&gt;
+
+&lt;p&gt;An alternative is for the service to provide a limitation in the license in terms of a time span that indicates when the license will expire after the first play. This allows the service provider to issue a license that could begin at some time in the future, expire at a specified time, and/or expire after a specified duration, after the content is first played.&lt;/p&gt;
+
+&lt;p&gt;A typical example would be:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;A user rents content on Friday, January 5, 2018 at 8 PM.&lt;/li&gt;
+  &lt;li&gt;The license delivered to the user includes the following restrictions:&lt;/li&gt;
+  &lt;li&gt;Right — Play (right to decrypt content to render on a screen)&lt;/li&gt;
+  &lt;li&gt;Begin Time — January 5, 2018 at 7:55 PM (the begin time is slightly in the past to account for any minor clock difference between client and Server)&lt;/li&gt;
+  &lt;li&gt;Expiration Time — February 5, 2018 at 8:00 PM (a month later)&lt;/li&gt;
+  &lt;li&gt;Expiration After First Play — 48 hours (2 full days after user has started to play)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Because rental content generally requires start and expiration times, the client will be required to support some type of PlayReady trusted clock. For more information, see Trusted Clocks.&lt;/p&gt;
+
+&lt;p&gt;The following figure indicates the interactions between clients and Servers in the rental content scenario.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-rental/rental.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The rental content scenario performs the following steps, as illustrated in the figure:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Content that will be distributed to clients is protected with Microsoft PlayReady technology.&lt;/li&gt;
+  &lt;li&gt;The service provider transfers content protection information to a License Server.&lt;/li&gt;
+  &lt;li&gt;The service provider transfers protected content to a Server for distribution over the Web.&lt;/li&gt;
+  &lt;li&gt;A client requests content for streaming or download.&lt;/li&gt;
+  &lt;li&gt;The client acquires a license and either begins streaming or downloading the content from the content Server using an Internet protocol such as SSTP, DASH, HLS, or HTTP. While the client is streaming or downloading the content, it can decrypt the content and the decrypted content can be continuously played back.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The most common delivery mechanisms for rental content is to stream the protected content from a Web service, or to download the content onto a local device and then play the content.&lt;/p&gt;
+
+&lt;h2 id=&quot;streaming-rental-content&quot;&gt;Streaming rental content&lt;/h2&gt;
+&lt;p&gt;When streaming rental media, content continuously plays back while it’s being transferred from the Web Server. The following technical aspects should be considered when implementing rental content that is streamed to user devices.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;PlayReady supports many kinds of protocols. There is no restriction for any protocol. However, PlayReady Clients usually support one or many of the following standards: SSTP (Smooth Streaming), DASH (Dynamic Adaptive Streaming over HTTP), HLS (HTTP Live Streaming). In addition to these protocols, it is perfectly acceptable and doable for a service that controls both its backend and clients to implement a different protocol, for example multicast TS on a closed network.&lt;/li&gt;
+  &lt;li&gt;The format of the content is typically H264 + AAC, or H265 + AAC, but all other codecs are allowed by PlayReady.&lt;/li&gt;
+  &lt;li&gt;Streaming rental content can use either a persistent or non-persistent license.
+The most obvious case would be non-persistent licenses. Non-persistent licenses are stored in volatile memory (RAM) and only last for as long as the current session. Non-persistent licenses are well adapted to the streaming scenario, because for streaming, the device has to be connected anyway, and can afford acquiring a non-persistent license just in time at the time of playback.
+A non-persistent license that is pre-acquired will also shorten the time to first frame. For more information, see License Generation and Issuance.
+Another way to optimize the time to first frame when streaming rental content is to leverage “PlayReady Limited Duration Licenses.” While the user is presented a page with a list of videos to select, licenses with a very small duration are pre-acquired in the background (typically thirty seconds). These licenses include the restriction “Real Time Expiration,” which ensure that the client will actually stop playing back with this license after thirty seconds. Then the user can select one of the listed videos to play. At this time, playback can start immediately. The player requests a full rental license (for 48 hours) for the video selected by the user, and the player then seamlessly binds to the rental license while playing back. This optimization is possible on PlayReady version 3.0 or later clients, which support real time expiration and non-persistent license delivery in batches.&lt;/li&gt;
+  &lt;li&gt;It is possible to use persistent licenses for streaming scenarios as well. Persistent licenses are stored in non-volatile memory (in the local data store) and last for the lifetime of the store or until a time-based restriction is reached.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;download-and-play-rental-content&quot;&gt;Download and play rental content&lt;/h2&gt;
+&lt;p&gt;Rental content can also be downloaded to the client before playback can begin. Typically this is done to achieve a constant quality of the content not correlated with the network quality, but may require some delay before the playback can actually start.&lt;/p&gt;
+
+&lt;p&gt;The following technical aspects should be considered when implementing rental content that is downloaded and played.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;The content may be downloaded as a simple file through HTTP, if the content is already authored in the right format for the device. Another option is that the client retrieves the successive fragments of an adaptive streaming asset over the streaming protocol (SSTP, DASH, HLS, other) and packs them all on the device’s local storage for further play back, in the form of a single fragmented file or a collection of fragment files. The latter allows more sophisticated scenarios like late binding, which is the ability for a client to select different tracks based on its preferences. For example, pick one video quality among multiple qualities, one particular audio track, or a subtitle track, independent of the initial content authoring on the backend.&lt;/li&gt;
+  &lt;li&gt;Download and play rental content can also use either a persistent or non-persistent license. Typically, a predelivery persistent license would be preferred.&lt;/li&gt;
+  &lt;li&gt;When using persistent licenses, the device may occasionally need to remove licenses from the data store after their expiration.&lt;/li&gt;
+  &lt;li&gt;Like all persistent licenses that include an expiration date, they should also include a begin date that helps prevent some user attacks against the device’s trusted clock system.&lt;/li&gt;
+&lt;/ul&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">For rental content, the license delivered for the content specifies an expiration date and time. After this date and time occurs, the content may still be on the user’s device, and the license may still also be persisting in the user’s device’s data store, but the PlayReady Client in the user’s device will use the device’s clock system to verify if the license is still valid, and enforce the expiration set by the service in the license.</summary></entry><entry><title type="html">输出保护等级</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/30/%E8%BE%93%E5%87%BA%E4%BF%9D%E6%8A%A4%E7%AD%89%E7%BA%A7/" rel="alternate" type="text/html" title="输出保护等级" /><published>2019-07-30T00:00:00+08:00</published><updated>2019-07-30T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/30/%E8%BE%93%E5%87%BA%E4%BF%9D%E6%8A%A4%E7%AD%89%E7%BA%A7</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/30/%E8%BE%93%E5%87%BA%E4%BF%9D%E6%8A%A4%E7%AD%89%E7%BA%A7/">&lt;p&gt;Output protection levels (OPLs) are described in detail in the Compliance Rules for PlayReady Products. This topic describes some of the general behavior of OPLs.&lt;/p&gt;
+
+&lt;p&gt;OPLs create layers of rights protection in order to associate types of content to a security restriction. Higher OPLs indicate a higher-level security. A device does not output content if the device only supports an output protection level that is lower than the minimum OPL for the content, because the device does not support the protected path requirements for playing back content protected at that level.&lt;/p&gt;
+
+&lt;p&gt;OPLs are associated to a particular type and format of content. For instance, compressed analog video, uncompressed analog video, compressed digital video, and uncompressed digital video all may have separate OPLs associated with them. Because each type of content format has a set of OPLs, different types of content may only have a few levels of protection associated with them.&lt;/p&gt;
+
+&lt;p&gt;The following table contains the allowed output protection levels for each type of content:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Content Type&lt;/th&gt;
+      &lt;th&gt;Allowed Values&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Minimum Compressed Digital Audio&lt;/td&gt;
+      &lt;td&gt;100, 150, 200, 250, 300&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Minimum Uncompressed Digital Audio&lt;/td&gt;
+      &lt;td&gt;100, 150, 200, 250, 300&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Minimum Compressed Digital Video&lt;/td&gt;
+      &lt;td&gt;400, 500&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Minimum Uncompressed Digital Video&lt;/td&gt;
+      &lt;td&gt;100, 250, 270, 300&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Minimum Analog Television&lt;/td&gt;
+      &lt;td&gt;100, 150, 200&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;The following tables outline the mappings between various OPLs in the PlayReady license and how PlayReady enforces them.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-opl/tab1.png&quot; alt=&quot;&quot; /&gt;
+&lt;img src=&quot;/assets/pr-opl/tab2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To illustrate the concept of OPLs, consider the following scenario. A user named Mike has acquired content for playback on his set-top box that has an output protection level of 300 for uncompressed digital video output. When Mike connects his set-top box with an HDMI cable to an old TV that does not support HDCP, he cannot play the content. When Mike connects his set-top box with an HDMI cable to a new TV that supports HDCP, he is able to play the content. However, the HDCP protection on the HDMI cable ensures the device at the end of the HDMI cable is a legitimate TV, not a recorder that would record the content without authorization from the content owner.&lt;/p&gt;
+
+&lt;p&gt;See this page about how Windows 10 enforces Output Protection Levels. Like every PlayReady Client, it allows playback on the various outputs in the boundaries defined in the Compliance Rules for PlayReady Products.&lt;/p&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">Output protection levels (OPLs) are described in detail in the Compliance Rules for PlayReady Products. This topic describes some of the general behavior of OPLs.</summary></entry><entry><title type="html">证书与策略</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/20/%E8%AF%81%E4%B9%A6%E4%B8%8E%E7%AD%96%E7%95%A5/" rel="alternate" type="text/html" title="证书与策略" /><published>2019-07-20T00:00:00+08:00</published><updated>2019-07-20T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/20/%E8%AF%81%E4%B9%A6%E4%B8%8E%E7%AD%96%E7%95%A5</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/20/%E8%AF%81%E4%B9%A6%E4%B8%8E%E7%AD%96%E7%95%A5/">&lt;p&gt;During license acquisition, the client sends a challenge to the PlayReady License Server containing the content header and information about the user’s device. Once the challenge is received by the PlayReady License Server, the Server parses the challenge and begins to populate the license response. The response will include the content key (CK) originally used to encrypt the content that corresponds to the key identifier (KID) sent in the license challenge, or several of them. In addition, the license response will return the PlayReady policies (rights and restrictions) under which the content can be played.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-licpol/policy.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;A PlayReady policy describes the actions permitted and/or required with respect to PlayReady content and restrictions on those actions as described in the PlayReady license associated with the PlayReady content. PlayReady policies are defined in the PlayReady Compliance Rules (CR). The service provider must incorporate the mandatory policies and choose which of the optional policies to use, and have these policies integrated into the license handler on the PlayReady License Server. These policies can be rights, such as the Play right, or restrictions, such as the Minimum Security Level, Output Protection Level, expiration after first play, and so on.&lt;/p&gt;
+
+&lt;p&gt;Note that a license response may contain multiple licenses. Each license contains one and only one Content Key {KID, CK} and a set of associated policies.&lt;/p&gt;
+
+&lt;p&gt;When the client receives the license response from the PlayReady License Server, it must be able to parse the content key and the policies sent back in the licenses it receives. The PlayReady Client must be able to follow the policies sent in the license response and play back content if all the mandatory policies are met, or halt play back if any of the mandatory policies are not met.&lt;/p&gt;
+
+&lt;h5 id=&quot;note&quot;&gt;Note&lt;/h5&gt;
+&lt;p&gt;If the client supports PlayReady Device Porting Kit v3.0 and higher, the PlayReady License Server will not provide a license that requires the Copy, Execute, or Read rights.&lt;/p&gt;
+
+&lt;p&gt;For more information about PlayReady policies, see the &lt;a href=&quot;https://www.microsoft.com/playready/licensing/compliance/&quot;&gt;PlayReady Compliance Rules&lt;/a&gt; and the &lt;a href=&quot;https://www.microsoft.com/playready/licensing/compliance/&quot;&gt;Defined Terms for PlayReady Compliance and Robustness Rules&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;playready-rights&quot;&gt;PlayReady Rights&lt;/h2&gt;
+&lt;p&gt;The following PlayReady rights are listed in the PlayReady Compliance Rules:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Play right (see CR 3.1): right for a client to decrypt PlayReady Audio/Video content (movies and music), render it, and pass it to Outputs.&lt;/li&gt;
+  &lt;li&gt;Execute right (see CR 4.1): right for a client to decrypt PlayReady Executable content (applications), and execute it. No longer supported in PlayReady 3.0 and later.&lt;/li&gt;
+  &lt;li&gt;Read right (see CR 5.1): right for a client to decrypt PlayReady Literary content (ebooks), and display it. No longer supported in PlayReady 3.0 and later.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;rights-restrictions-and-other-policies&quot;&gt;Rights Restrictions and other Policies&lt;/h2&gt;
+&lt;p&gt;The PlayReady Compliance Rules contain a full list of right modifiers (extensions and restrictions) that may apply to the license. Each of these modifiers has multiple properties:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Action&lt;/strong&gt;—specifies the action of the policy (for example, engage HDCP encryption on the HDMI output).&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Optional&lt;/strong&gt;—specifies if the client must engage the action or must try to engage the action (for example, Output Control for Uncompressed Digital Video Content 250, see CR 3.6.5).&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Must Understand&lt;/strong&gt;—specifies if a client is allowed to bind a license and decrypt content even if it does not understand the policy. Applicable for clients of a lower version (for example, a PlayReady 2.X Client) receiving a license including PlayReady policy introduced in a future version (for example, a PlayReady 3.X Server, see CR 2.4).&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Best Effort&lt;/strong&gt;—another way to specify if the client must engage the action or must try to engage the action (for example, Macrovision Best Effort, see CR 2.4).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The following sections list some of the more commonly used right modifiers.&lt;/p&gt;
+
+&lt;h2 id=&quot;absolute-expiration-policy&quot;&gt;Absolute Expiration Policy&lt;/h2&gt;
+&lt;p&gt;One of the common restrictions is the absolute time date expiration policy. Every license may include an absolute time date expiration policy. If it is present, the client must stop binding this license and decrypting content if the current date time is after that value.
+A practical example is a user on a client playing content from a monthly subscription service. The monthly renewal day of the service for this user is the 15th of the month. The user starts playback on the 2nd of the month (the 2nd of November, 2017). The License Server will give the right to the user until the 15th of the month, and include an Expiration policy set to 11/16/2017, 0:00am. Whenever the user pays the subscription fee for the next month, the service will issue another license with an Expiration date set one month later.&lt;/p&gt;
+
+&lt;p&gt;This policy is by definition a Must Understand and Mandatory (meaning, not Best Effort) policy, so a client that binds a license that includes this policy MUST:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Have a PlayReady Trusted Clock System to have a trusted time. A PlayReady Secure Clock or a PlayReady Anti-Rollback Clock are two acceptable forms of PlayReady Trusted Clock Systems for PlayReady Clients.&lt;/li&gt;
+  &lt;li&gt;Have this PlayReady Trusted Clock set.&lt;/li&gt;
+  &lt;li&gt;Be able to parse and understand the Expiration policy in the license.&lt;/li&gt;
+  &lt;li&gt;Compare the current time from the PlayReady Trusted Clock System with the Expiration value.&lt;/li&gt;
+  &lt;li&gt;Not bind the license if the current time is past the Expiration value.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h5 id=&quot;note-1&quot;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Whenever a License Server sets an Absolute Expiration policy in a license, Microsoft strongly recommends that a Begin Date policy also be set, for Robustness Reasons. See Best Practices for License Policies for more details.&lt;/p&gt;
+
+&lt;h2 id=&quot;begin-date-policy&quot;&gt;Begin Date Policy&lt;/h2&gt;
+&lt;p&gt;Another common restriction is the begin date policy. If it is present, the client must not bind this license and begin decrypting content until the current date time is after that value.&lt;/p&gt;
+
+&lt;p&gt;For business models that require content to be used only for a limited amount of time, such as in a rental scenario, an end date is required to indicate when the license expires and the content can no longer be played (for example, the content can only be played until 5pm EST, May 15, 2018). This is sufficient for a rental scenario. However, specifying a begin date with the end date is a natural impedance to clock rollback attacks.&lt;/p&gt;
+
+&lt;p&gt;This policy is by definition a Must Understand and Mandatory (meaning, not Best Effort) policy, so a client that binds a license that includes this policy MUST:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Have a PlayReady Trusted Clock System to have a trusted time. A PlayReady Secure Clock or a PlayReady Anti-Rollback Clock are two acceptable forms of PlayReady Trusted Clock Systems for PlayReady Clients.&lt;/li&gt;
+  &lt;li&gt;Have this PlayReady Trusted Clock set.&lt;/li&gt;
+  &lt;li&gt;Be able to parse and understand the Begin Date policy in the license.&lt;/li&gt;
+  &lt;li&gt;Compare the current time from the PlayReady Trusted Clock System with the Begin Date value.&lt;/li&gt;
+  &lt;li&gt;Not bind the license if the current time is before the Begin Time value.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For more information, see Using BeginDate with EndDate&lt;/p&gt;
+
+&lt;h2 id=&quot;expiration-after-first-play-policy&quot;&gt;Expiration After First Play Policy&lt;/h2&gt;
+&lt;p&gt;Besides scenarios in which content can be played back depending on a begin time and end time, there is also the model that specifies how long content can be played back after the content is first played. The expiration after first play policy, if present, indicates that the client must stop binding this license and decrypting content if the current number of seconds after the content was first played matches the value in this policy.&lt;/p&gt;
+
+&lt;h5 id=&quot;note-2&quot;&gt;Note&lt;/h5&gt;
+&lt;p&gt;For content that was purchased to own, users expect the content to play indefinitely on their devices. Services would most likely issue licenses for this content with no expiration at all. However, because users change devices frequently, and because each device may change its PlayReady identity some time (when a re-individualization is run, or when a device is completely reinstalled), services should be ready at any time to re-issue licenses for purchased content that was previously delivered to a user or a device.&lt;/p&gt;
+
+&lt;h2 id=&quot;security-level-policy&quot;&gt;Security Level Policy&lt;/h2&gt;
+&lt;p&gt;PlayReady Clients all have a property set in their Unit-level Client Certificate called the Client Security Level. When a License Server sends a license to a client, it includes in the license the MinimumSecurityLevel policy and sets its value to 150, 2000, or 3000. This value means that the license can be bound and content can be decrypted only on clients that have this Security Level, or a higher one.&lt;/p&gt;
+
+&lt;p&gt;See the Client Security Level page for more information about that policy.&lt;/p&gt;
+
+&lt;h2 id=&quot;output-control-for-uncompressed-digital-video-content-policy&quot;&gt;Output Control for Uncompressed Digital Video Content Policy&lt;/h2&gt;
+&lt;p&gt;A service may want to allow a client to decrypt and render content, but restrict how it flows to external outputs, like HDMI outputs. The service may want to do this because there might be recorders plugged to the HDMI cable, capable of making a very good copy of the original content.&lt;/p&gt;
+
+&lt;p&gt;PlayReady has all sorts of Output Protection controls for analog, digital, and wireless outputs. One of the most common is the HDCP policy for HDMI outputs (see CR 3.6.5). Depending on the value the License Server sets for this policy, which may be 100, 250, 270, 300 (see CR 6.7), the client must try to engage, or must engage HDCP on the HDMI outputs when playing back on these outputs.&lt;/p&gt;
+
+&lt;p&gt;For example, if the license includes an Output Control for Uncompressed Digital Video Content set to 300 (also known as Digital Video OPL 300), the client MUST engage HDCP on the HDMI output when playing content. If the client cannot engage HDCP (any version) on an HDMI output, it has two options:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Play content and block this output. For example, play on an internal screen or on an analog output, but block the signal on the HDMI output.&lt;/li&gt;
+  &lt;li&gt;Just not play the content. If the device has an internal screen, an analog output, and an HDMI output, blocking the playback on all outputs just because the device can’t engage HDCP on the HDMI output would certainly be a suboptimal user experience. The user may ask “why does it not play on the analog output although the restriction only applies to the HDMI output?”. However, this option is acceptable from a PlayReady Compliance perspective as it fulfills the CR&amp;amp;RRs.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Note that HDCP Type 1 is supported starting with HDCP version 2.1, so engaging HDCP Type 1 won’t be possible on devices that support only HDCP 2.0 or 1.4.&lt;/p&gt;
+
+&lt;h2 id=&quot;other-policies&quot;&gt;Other Policies&lt;/h2&gt;
+&lt;p&gt;PlayReady supports dozens if not hundreds of different policies beyond the ones described on this page. Please read the Compliance Rules for PlayReady Products for the complete definition of the supported policies.&lt;/p&gt;
+
+&lt;h2 id=&quot;xmr-specification&quot;&gt;XMR Specification&lt;/h2&gt;
+&lt;p&gt;PlayReady licensed companies have access to a more comprehensive documentation package that includes the PlayReady Extensible Media Rights (XMR) Specification that describes precisely each of these policies and the way they’re coded in a license.&lt;/p&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">During license acquisition, the client sends a challenge to the PlayReady License Server containing the content header and information about the user’s device. Once the challenge is received by the PlayReady License Server, the Server parses the challenge and begins to populate the license response. The response will include the content key (CK) originally used to encrypt the content that corresponds to the key identifier (KID) sent in the license challenge, or several of them. In addition, the license response will return the PlayReady policies (rights and restrictions) under which the content can be played.</summary></entry><entry><title type="html">安全等级</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/13/%E5%AE%89%E5%85%A8%E7%AD%89%E7%BA%A7/" rel="alternate" type="text/html" title="安全等级" /><published>2019-07-13T00:00:00+08:00</published><updated>2019-07-13T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/13/%E5%AE%89%E5%85%A8%E7%AD%89%E7%BA%A7</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/13/%E5%AE%89%E5%85%A8%E7%AD%89%E7%BA%A7/">&lt;p&gt;The Security Level is a property of a PlayReady Client, and every license delivered to a client has a property indicating the minimum Security Level required from a client to allow bind this license.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-security-level-of-a-client&quot;&gt;The Security Level of a Client&lt;/h2&gt;
+&lt;p&gt;The PlayReady Client Security Level is a property of the client (device or application) that defines how robust the client is against unauthorized use. The higher the Security Level is, the more robust the client has claimed to be.&lt;/p&gt;
+
+&lt;p&gt;PlayReady currently defines three levels:&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Security Level&lt;/th&gt;
+      &lt;th&gt;Purpose&lt;/th&gt;
+      &lt;th&gt;Client Implementation&lt;/th&gt;
+      &lt;th&gt;Version&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;SL150&lt;/td&gt;
+      &lt;td&gt;For clients under development or under test. Not suitable for commercial content in a commercial scenario.&lt;/td&gt;
+      &lt;td&gt;Any implementation is acceptable. Assets, Client Secrets, or Content Secrets are not protected at all against unauthorized use.&lt;/td&gt;
+      &lt;td&gt;Any&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;SL2000&lt;/td&gt;
+      &lt;td&gt;For hardened devices and applications consuming commercial content.&lt;/td&gt;
+      &lt;td&gt;For devices and applications.	Assets, Client Secrets, or Content Secrets are protected through software or hardware means.&lt;/td&gt;
+      &lt;td&gt;Any&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;SL3000&lt;/td&gt;
+      &lt;td&gt;For hardened devices with the highest security consuming the highest quality of commercial content.&lt;/td&gt;
+      &lt;td&gt;For devices only.	Assets, Client Secrets, and Content Secrets are protected through hardware means, using a Trusted Execution Environment (TEE) of the processor. Conformant to a superset of Compliance and Robustness requirements.&lt;/td&gt;
+      &lt;td&gt;PlayReady 3.0 or higher&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;Illustration of a SL2000 device or application. The Final Product is hardened and verified against unauthorized use.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-sl/sl2000.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Illustration of a SL3000 device. The Intermediate Product is hardened and verified using a TEE, and the Final Product is hardened and verified against unauthorized use.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/pr-sl/sl3000.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;hardware-drm-versus-software-drm&quot;&gt;Hardware-DRM versus Software-DRM&lt;/h2&gt;
+&lt;p&gt;SL2000 Clients are commonly referred to as “Software-DRM” Clients, for the reason that their robustness is backed mostly with software means. SL3000 Clients are commonly referred to as “Hardware-DRM” Clients, because the core functionalities of their PlayReady stack must be implemented in a Trusted Execution Environment of the processor, and backed by hardware means.&lt;/p&gt;
+
+&lt;p&gt;Increasingly, content providers are moving towards hardware-based protections for granting permission to play back full high value content in apps. Robust support for a hardware implementation of the cryptographic core has been added to PlayReady to meet this need. This support enables secure playback of higher value content on multiple device platforms. Key material (including private keys, content keys, and any other key material used to derive or unlock said keys), and decrypted compressed and uncompressed video samples are protected by leveraging hardware security. Hardware-based PlayReady is supported on a multitude of devices, including both Windows and non-Windows devices such as TV sets, phones, and tablets.&lt;/p&gt;
+
+&lt;h2 id=&quot;using-the-security-level-in-a-license&quot;&gt;Using the Security Level in a License&lt;/h2&gt;
+&lt;p&gt;The Security Level is a property of the client defined during the development cycle. It has implications on the means that are implemented to assure the security of the Content Secrets and Client Secrets against attacks, and on the development and certification plans that the client developer makes.&lt;/p&gt;
+
+&lt;p&gt;License Servers can adjust the licenses, or license properties, delivered to clients based on their Security Level, by two methods.&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;The Security Level is a property of the Client Certificate embedded in the client at manufacturing time. When a client acquires a license from a License Server, it provides in the license request a copy of its Client Certificate. The License Server receives this request and can check for the security level of the client before it delivers licenses to them. It can include logic to deliver different licenses for different clients. For example, a SL3000 Client will have access to a higher resolution than the SL2000 Client, and receive different licenses than than the other client. Or, it will have access to a different catalog, including theatrical releases.&lt;/li&gt;
+  &lt;li&gt;In addition, every license delivered includes a property called MinimumSecurityLevel, which is set to 150, 2000, or 3000 by the License Server. A License Server delivering a license to a client sets this value in the license. Clients binding a license verify if their own Client Security Level is equal or greater than the MinimumSecurityLevel value of the license. If it isn’t, they refuse to bind and play.
+&lt;img src=&quot;/assets/pr-sl/lic.png&quot; alt=&quot;&quot; /&gt;&lt;/li&gt;
+&lt;/ol&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">The Security Level is a property of a PlayReady Client, and every license delivered to a client has a property indicating the minimum Security Level required from a client to allow bind this license.</summary></entry><entry><title type="html">证书保存</title><link href="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/12/%E8%AF%81%E4%B9%A6%E4%BF%9D%E5%AD%98/" rel="alternate" type="text/html" title="证书保存" /><published>2019-07-12T00:00:00+08:00</published><updated>2019-07-12T00:00:00+08:00</updated><id>http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/12/%E8%AF%81%E4%B9%A6%E4%BF%9D%E5%AD%98</id><content type="html" xml:base="http://localhost:4000/%E8%A7%86%E9%A2%91/playready/2019/07/12/%E8%AF%81%E4%B9%A6%E4%BF%9D%E5%AD%98/">&lt;p&gt;License Servers built using PlayReady Server SDK issue licenses to clients. These licenses contain policy information for the content with which they are associated. Licenses may be issued over any transport, but typically licenses are issued over the Web.
+PlayReady licenses can be:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Persistent
+Persistent licenses are stored in non-volatile memory (for example, in the local License Store on a hard drive or in a NAND memory) and last for the lifetime of the store or until a time-based restriction is reached. Generally, persistent licenses can either be used immediately or can be stored to be used in the future, and can be used to play back content for the life of the license. In addition, persistent licenses can be used to play back downloaded content while the device is offline.&lt;/li&gt;
+  &lt;li&gt;Non-persistent
+Non-persistent licenses are stored in volatile memory and only last for as long as the current session. Generally, non-persistent licenses are used for immediate playback of content and will require another license when playback begins again. Non-persistent licenses are also known as in-memory licenses, or in-memory-only licenses.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Both persistent and non-persistent licenses include rights and right restrictions set by the issuing service. These rights, such as Play, and rights restrictions, such as date/time expiration, begin time, expiration after first play, and so on, are described in detail in the &lt;em&gt;Microsoft PlayReady Extensible Media Rights Specification&lt;/em&gt;, which is contained in the PlayReady documentation provided to licensees.&lt;/p&gt;</content><author><name>MORE</name></author><category term="PlayReady" /><category term="DRM" /><category term="内容保护" /><summary type="html">License Servers built using PlayReady Server SDK issue licenses to clients. These licenses contain policy information for the content with which they are associated. Licenses may be issued over any transport, but typically licenses are issued over the Web. PlayReady licenses can be: Persistent Persistent licenses are stored in non-volatile memory (for example, in the local License Store on a hard drive or in a NAND memory) and last for the lifetime of the store or until a time-based restriction is reached. Generally, persistent licenses can either be used immediately or can be stored to be used in the future, and can be used to play back content for the life of the license. In addition, persistent licenses can be used to play back downloaded content while the device is offline. Non-persistent Non-persistent licenses are stored in volatile memory and only last for as long as the current session. Generally, non-persistent licenses are used for immediate playback of content and will require another license when playback begins again. Non-persistent licenses are also known as in-memory licenses, or in-memory-only licenses.</summary></entry></feed>
