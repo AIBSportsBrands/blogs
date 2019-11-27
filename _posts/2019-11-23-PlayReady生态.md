@@ -11,7 +11,7 @@ PlayReady系统主要由客户端和服务器两部分组成。这两部分通�
 
 PlayReady客户端负责按照给定的证书来解密播放特定的被加密保护的视频内容，它可以是电脑上的媒体播放器，也可以是手机、平板电脑、电视上的应用。PlayReady客户端还必须保证证书中包含的权限（rights）和限制（restrictions）条款被严格执行。
 
-![](/assets/pr-eco/pr-devices.jpg)
+![](/assets/posts/pr-eco/pr-devices.jpg)
 
 ## PlayReady服务器
 
@@ -21,7 +21,7 @@ PlayReady服务器包括证书服务、域名控制器、计量服务、Secure S
 
 除此以外，一个完整的内容后端还需要视频内容打包服务来负责加密编码视频，还需要流服务器和CDN来分发内容。
 
-![](/assets/pr-eco/pr-servers.jpg)
+![](/assets/posts/pr-eco/pr-servers.jpg)
 
 ###### Note
 PlayReady不需要一个特殊的Web服务器来分发内容。
@@ -32,7 +32,7 @@ PlayReady系统中，视频内容打包服务负责加密视频并发布到Web�
 
 下图展示了协议获取（license acquisition，LA）的基本流程。灰色线表示清流，黑色线表示加密流，白色线表示证书。
 
-![](/assets/pr-eco/pr-flow.jpg)
+![](/assets/posts/pr-eco/pr-flow.jpg)
 
 整个流程包含下面几步：
 
